@@ -5,16 +5,14 @@ from app.routers import catalog, dashboard, invoices, auth
 from app.services.alert_engine import start_scheduler
 import os
 
-# Base.metadata.create_all(bind=engine) # Inicializado por script SQL
+# Esto creará las tablas automáticamente en la base de datos de Render
+Base.metadata.create_all(bind=engine) 
 
 app = FastAPI(title="ERP Financiero API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173", # Vite Dev
-        "https://erp-frontend-vercel-url.vercel.app" # Cambiar por URL Real en Prod
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
