@@ -1,11 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.db import engine, Base
-from app.routers import catalog, dashboard, invoices, auth
-from app.services.alert_engine import start_scheduler
+# Importamos directamente porque los archivos están sueltos en GitHub
+from db import engine, Base
+import auth, catalog, dashboard, invoices
 import os
 
-# Esto creará las tablas automáticamente en la base de datos de Render
+# Esto crea las tablas automáticamente
 Base.metadata.create_all(bind=engine) 
 
 app = FastAPI(title="ERP Financiero API")
@@ -20,14 +20,11 @@ app.add_middleware(
 
 os.makedirs('uploads', exist_ok=True)
 
-@app.on_event("startup")
-def startup_event():
-    start_scheduler()
-
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
 
+# Conectamos las rutas
 app.include_router(auth.router, prefix="/auth", tags=["Auth"])
 app.include_router(catalog.router, prefix="/catalog", tags=["Catalog"])
 app.include_router(dashboard.router, prefix="/dashboard", tags=["Dashboard"])
