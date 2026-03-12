@@ -20,15 +20,14 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     access_token = create_access_token(data={"sub": user.email})
     return {"access_token": access_token, "token_type": "bearer"}
 
-# Endpoint oculto para crear el primer admin (útil para inicializar)
-@router.post("/create-first-admin")
-def create_first_admin(email: str, password: str, db: Session = Depends(get_db)):
-    if db.query(Usuario).first():
-        raise HTTPException(status_code=400, detail="Ya existen usuarios")
+@router.post("/register")
+def register(email: str, password: str, db: Session = Depends(get_db)):
+    if db.query(Usuario).filter(Usuario.email == email).first():
+        raise HTTPException(status_code=400, detail="El usuario ya existe")
     
     hashed_password = get_password_hash(password)
-    user = Usuario(email=email, password_hash=hashed_password, rol="ADMIN")
+    user = Usuario(email=email, password_hash=hashed_password, rol="USER")
     db.add(user)
     db.commit()
     db.refresh(user)
-    return {"message": "Admin creado exitosamente"}
+    return {"message": "Usuario registrado exitosamente"}
