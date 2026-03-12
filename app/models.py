@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, Date, Boolean, Numeric, ForeignKey, Text, JSON, TIMESTAMP, CheckConstraint, UniqueConstraint
-from app.db import Base
+from import Base
 from datetime import datetime
 
 class Usuario(Base):
