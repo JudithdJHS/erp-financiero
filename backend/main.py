@@ -1,16 +1,24 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 import os
+import traceback
 
+# Fix imports
 from db import engine, Base
 import models
-import auth, catalog, dashboard, invoices
-from alert_engine import start_scheduler
 
+# Create tables with detailed logging
 try:
+    print("Creating database tables...")
     Base.metadata.create_all(bind=engine)
+    print("Database tables created successfully!")
 except Exception as e:
-    print(f"DB init warning: {e}")
+    print(f"DB ERROR: {e}")
+    traceback.print_exc()
+
+# Import routers
+import auth, catalog, dashboard, invoices
 
 app = FastAPI(title="ERP Financiero API")
 
@@ -26,10 +34,19 @@ os.makedirs('uploads', exist_ok=True)
 
 @app.on_event("startup")
 def on_startup():
+    print("App startup complete!")
     try:
+        from alert_engine import start_scheduler
         start_scheduler()
+        print("Scheduler started!")
     except Exception as e:
         print(f"Scheduler warning: {e}")
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    print(f"Unhandled exception: {exc}")
+    traceback.print_exc()
+    return JSONResponse(status_code=500, content={"detail": str(exc)})
 
 @app.get("/health")
 def health():
