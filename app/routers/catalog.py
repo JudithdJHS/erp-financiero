@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from typing import List
-from app import crud, schemas
-from app.deps import get_db
-from app.auth import get_current_user
+from import crud, schemas
+from deps import get_db
+from auth import get_current_user
 
 router = APIRouter(dependencies=[Depends(get_current_user)])
 
@@ -23,7 +23,7 @@ def list_presupuestos(db: Session = Depends(get_db)):
 def update_presupuesto(presupuesto_id: int, presupuesto_in: schemas.PresupuestoBase, db: Session = Depends(get_db)):
     # Simple direct logic since there is no crud layer function for update yet
     from fastapi import HTTPException
-    import app.models as models
+    import models as models
     db_presupuesto = db.query(models.Presupuesto).filter(models.Presupuesto.id == presupuesto_id).first()
     if not db_presupuesto:
         raise HTTPException(status_code=404, detail="Presupuesto no encontrado")
