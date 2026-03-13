@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from db import SessionLocal
-from models import Presupuesto, Alerta
+from models import Presupuesto, Alerta, CampanaEvento, Categoria
 
 def evaluate_budgets():
     db: Session = SessionLocal()
@@ -10,25 +10,30 @@ def evaluate_budgets():
             if p.monto_total <= 0:
                 continue
             
-            porcentaje = (p.monto_ejecutado / p.monto_total) * 100
+            porcentaje = (float(p.monto_ejecutado) / float(p.monto_total)) * 100
             nivel = None
             if porcentaje >= 100:
-                nivel = "ROJA"
+                nivel = "CRITICO" # More descriptive than "ROJA"
             elif porcentaje >= 90:
-                nivel = "NARANJA"
-            elif porcentaje >= 80:
-                nivel = "AMARILLA"
+                nivel = "ADVERTENCIA"
             
             if nivel:
+                # Get names for better message
+                campana = db.query(CampanaEvento).filter(CampanaEvento.id == p.campana_evento_id).first()
+                categoria = db.query(Categoria).filter(Categoria.id == p.categoria_id).first()
+                
+                camp_name = campana.nombre if campana else f"ID {p.campana_evento_id}"
+                cat_name = categoria.nombre if categoria else f"ID {p.categoria_id}"
+
                 alerta_activa = db.query(Alerta).filter(
                     Alerta.presupuesto_id == p.id,
                     Alerta.activa == True
                 ).first()
 
-                mensaje = f"Consumo del {porcentaje:.2f}% en la categoría {p.categoria_id} para la campaña {p.campana_evento_id}"
+                mensaje = f"Límite alcanzado: {cat_name} ({camp_name}) al {porcentaje:.1f}%"
 
                 if alerta_activa:
-                    if alerta_activa.nivel != nivel:
+                    if alerta_activa.nivel != nivel or abs(float(alerta_activa.porcentaje) - porcentaje) > 1:
                         alerta_activa.nivel = nivel
                         alerta_activa.porcentaje = porcentaje
                         alerta_activa.mensaje = mensaje
@@ -43,13 +48,25 @@ def evaluate_budgets():
                         activa=True
                     )
                     db.add(nueva_alerta)
+            else:
+                # Deactivate alert if it's below threshold now? (re-allocation)
+                alerta_activa = db.query(Alerta).filter(
+                    Alerta.presupuesto_id == p.id,
+                    Alerta.activa == True
+                ).first()
+                if alerta_activa and porcentaje < 80:
+                    alerta_activa.activa = False
+                    db.add(alerta_activa)
         
         db.commit()
     finally:
         db.close()
 
 def start_scheduler():
-    from apscheduler.schedulers.background import BackgroundScheduler
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(evaluate_budgets, 'interval', minutes=1)
-    scheduler.start()
+    try:
+        from apscheduler.schedulers.background import BackgroundScheduler
+        scheduler = BackgroundScheduler()
+        scheduler.add_job(evaluate_budgets, 'interval', minutes=5) # 5 minutes is enough
+        scheduler.start()
+    except Exception as e:
+        print(f"Error starting scheduler: {e}")
