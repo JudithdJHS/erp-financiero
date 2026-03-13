@@ -1,24 +1,14 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 import os
-import traceback
 
-# Fix imports
+# Imports directos para despliegue plano en la raíz de GitHub
 from db import engine, Base
-import models
-
-# Create tables with detailed logging
-try:
-    print("Creating database tables...")
-    Base.metadata.create_all(bind=engine)
-    print("Database tables created successfully!")
-except Exception as e:
-    print(f"DB ERROR: {e}")
-    traceback.print_exc()
-
-# Import routers
 import auth, catalog, dashboard, invoices
+from alert_engine import start_scheduler
+
+# Crear tablas
+Base.metadata.create_all(bind=engine) 
 
 app = FastAPI(title="ERP Financiero API")
 
@@ -33,23 +23,11 @@ app.add_middleware(
 os.makedirs('uploads', exist_ok=True)
 
 @app.on_event("startup")
-def on_startup():
-    print("App startup complete!")
-    try:
-        from alert_engine import start_scheduler
-        start_scheduler()
-        print("Scheduler started!")
-    except Exception as e:
-        print(f"Scheduler warning: {e}")
-
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    print(f"Unhandled exception: {exc}")
-    traceback.print_exc()
-    return JSONResponse(status_code=500, content={"detail": str(exc)})
+def startup_event():
+    start_scheduler()
 
 @app.get("/health")
-def health():
+def health_check():
     return {"status": "ok"}
 
 app.include_router(auth.router, prefix="/auth", tags=["Auth"])
