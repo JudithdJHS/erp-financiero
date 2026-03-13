@@ -37,7 +37,7 @@ def delete_campana(db: Session, camp_id: int):
     return db_camp
 
 def get_programas(db: Session):
-    return db.query(models.Programa).filter(models.Programa.activa == True).all()
+    return db.query(models.Programa).filter(models.Programa.activo == True).all()
 
 def create_programa(db: Session, prog: schemas.ProgramaBase):
     db_prog = models.Programa(**prog.model_dump())
@@ -49,7 +49,7 @@ def create_programa(db: Session, prog: schemas.ProgramaBase):
 def delete_programa(db: Session, prog_id: int):
     db_prog = db.query(models.Programa).filter(models.Programa.id == prog_id).first()
     if db_prog:
-        db_prog.activa = False
+        db_prog.activo = False
         db.commit()
     return db_prog
 
