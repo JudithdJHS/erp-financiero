@@ -5,11 +5,46 @@ from decimal import Decimal
 def get_categorias(db: Session):
     return db.query(models.Categoria).all()
 
+def create_categoria(db: Session, cat: schemas.CategoriaBase):
+    db_cat = models.Categoria(**cat.model_dump())
+    db.add(db_cat)
+    db.commit()
+    db.refresh(db_cat)
+    return db_cat
+
+def delete_categoria(db: Session, cat_id: int):
+    db_cat = db.query(models.Categoria).filter(models.Categoria.id == cat_id).first()
+    if db_cat:
+        db.delete(db_cat)
+        db.commit()
+    return db_cat
+
 def get_campanas(db: Session):
     return db.query(models.CampanaEvento).filter(models.CampanaEvento.activa == True).all()
 
+def create_campana(db: Session, camp: schemas.CampanaEventoBase):
+    db_camp = models.CampanaEvento(**camp.model_dump())
+    db.add(db_camp)
+    db.commit()
+    db.refresh(db_camp)
+    return db_camp
+
+def delete_campana(db: Session, camp_id: int):
+    db_camp = db.query(models.CampanaEvento).filter(models.CampanaEvento.id == camp_id).first()
+    if db_camp:
+        db_camp.activa = False # Soft delete or hard? Let's do soft for campaigns
+        db.commit()
+    return db_camp
+
 def get_presupuestos(db: Session):
     return db.query(models.Presupuesto).all()
+
+def create_presupuesto(db: Session, pres: schemas.PresupuestoBase):
+    db_pres = models.Presupuesto(**pres.model_dump())
+    db.add(db_pres)
+    db.commit()
+    db.refresh(db_pres)
+    return db_pres
 
 def create_factura(db: Session, factura: schemas.FacturaCreate):
     presupuesto = db.query(models.Presupuesto).filter(
