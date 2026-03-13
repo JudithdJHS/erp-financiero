@@ -10,6 +10,13 @@ class Usuario(Base):
     rol = Column(String(50), default="ADMIN")
     activo = Column(Boolean, default=True)
 
+class Programa(Base):
+    __tablename__ = "programas"
+    id = Column(Integer, primary_key=True, index=True)
+    nombre = Column(String(255), nullable=False)
+    descripcion = Column(Text)
+    activo = Column(Boolean, default=True)
+
 class Categoria(Base):
     __tablename__ = "categorias"
     id = Column(Integer, primary_key=True, index=True)
@@ -39,6 +46,7 @@ class Factura(Base):
     id = Column(Integer, primary_key=True, index=True)
     presupuesto_id = Column(Integer, ForeignKey("presupuestos.id"), nullable=False)
     campana_evento_id = Column(Integer, ForeignKey("campanas_eventos.id"), nullable=False)
+    programa_id = Column(Integer, ForeignKey("programas.id"), nullable=True)
     proveedor = Column(String(255))
     monto = Column(Numeric(15, 2), nullable=False)
     fecha_factura = Column(Date)
