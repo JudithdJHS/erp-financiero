@@ -1,36 +1,40 @@
 import os
+import random
+from datetime import datetime
 from google.cloud import documentai
 from google.api_core.client_options import ClientOptions
 from config import settings
 
 def process_invoice_document(file_content: bytes, mime_type: str) -> dict:
+    # MODO SIMULACIÓN si no hay credenciales
     if not settings.GCP_PROJECT_ID or not settings.GCP_PROCESSOR_ID:
         return {
-            "proveedor": "Proveedor Simulado OCR",
-            "monto": 100.00,
-            "fecha_factura": "2026-03-12",
-            "concepto": "Suministros varios (Simulado)",
-            "numero_factura": "INV-0001",
-            "ocr_payload": {"raw_text": "Este es un payload simulado debido a la falta de credenciales de Google Cloud."}
+            "proveedor": "Proveedor Ejemplo (Simulado)",
+            "monto": float(random.randint(50000, 500000)),
+            "fecha_factura": datetime.now().strftime("%Y-%m-%d"),
+            "concepto": "Compra de insumos y papelería (Simulado)",
+            "numero_factura": f"FAC-{random.randint(1000, 9999)}",
+            "ocr_payload": {"raw_text": "INFO: Google Document AI no configurado. Usando modo simulación."}
         }
         
-    opts = ClientOptions(api_endpoint=f"{settings.GCP_LOCATION}-documentai.googleapis.com")
-    client = documentai.DocumentProcessorServiceClient(client_options=opts)
-
-    name = client.processor_path(settings.GCP_PROJECT_ID, settings.GCP_LOCATION, settings.GCP_PROCESSOR_ID)
-
-    raw_document = documentai.RawDocument(content=file_content, mime_type=mime_type)
-    request = documentai.ProcessRequest(name=name, raw_document=raw_document)
-
     try:
+        opts = ClientOptions(api_endpoint=f"{settings.GCP_LOCATION}-documentai.googleapis.com")
+        client = documentai.DocumentProcessorServiceClient(client_options=opts)
+
+        name = client.processor_path(settings.GCP_PROJECT_ID, settings.GCP_LOCATION, settings.GCP_PROCESSOR_ID)
+
+        raw_document = documentai.RawDocument(content=file_content, mime_type=mime_type)
+        request = documentai.ProcessRequest(name=name, raw_document=raw_document)
+
         result = client.process_document(request=request)
         document = result.document
+        
         extracted_data = {
-            "proveedor": None,
-            "monto": None,
-            "fecha_factura": None,
-            "concepto": None,
-            "numero_factura": None,
+            "proveedor": "",
+            "monto": 0.0,
+            "fecha_factura": "",
+            "concepto": "",
+            "numero_factura": "",
             "ocr_payload": {"raw_text": document.text}
         }
 
@@ -62,10 +66,10 @@ def process_invoice_document(file_content: bytes, mime_type: str) -> dict:
         print(f"Error procesando OCR: {e}")
         return {
             "error": str(e),
-            "proveedor": None,
-            "monto": None,
-            "fecha_factura": None,
-            "concepto": None,
-            "numero_factura": None,
+            "proveedor": "",
+            "monto": 0.0,
+            "fecha_factura": "",
+            "concepto": "",
+            "numero_factura": "",
             "ocr_payload": None
         }
