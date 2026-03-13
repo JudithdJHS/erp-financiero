@@ -47,7 +47,8 @@ const Budgets = () => {
       setNewBudget({ campana_evento_id: '', categoria_id: '', monto_total: '' });
       loadData();
     } catch (error) {
-       alert("Error al crear presupuesto. Verifica que la campaña e id sean válidos.");
+       const msg = error.response?.data?.detail || "Error al crear presupuesto. Verifica los datos.";
+       alert(msg);
     }
   };
 
