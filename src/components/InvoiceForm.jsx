@@ -1,19 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { UploadCloud, CheckCircle2, AlertCircle, FileText, Loader2, Calendar, Hash, DollarSign, Type, User } from 'lucide-react';
+import { UploadCloud, CheckCircle2, AlertCircle, FileText, Loader2, Calendar, Hash, DollarSign, Type, User, Heart } from 'lucide-react';
 import api from '../api';
 
 const InvoiceForm = ({ onGastoRegistrado }) => {
   const [campanas, setCampanas] = useState([]);
   const [presupuestos, setPresupuestos] = useState([]);
   const [categorias, setCategorias] = useState([]);
-  const [programs, setPrograms] = useState([
-      {id: 1, name: 'Cumplimiento de Sueños'},
-      {id: 2, name: 'Abrazos que Sanan'},
-      {id: 3, name: 'Mercados con Amor'},
-      {id: 4, name: 'Almuerzos con Amor'},
-      {id: 5, name: 'Un Sueño sobre Ruedas'},
-      {id: 6, name: 'Aprendemprendiendo'},
-  ]);
+  const [programs, setPrograms] = useState([]);
   
   const [formData, setFormData] = useState({
     campana_evento_id: '',
@@ -25,7 +18,7 @@ const InvoiceForm = ({ onGastoRegistrado }) => {
     monto: '',
     numero_factura: '',
     programa_id: '',
-    tipo_documento: 'Factura' // default
+    tipo_documento: 'Factura'
   });
 
   const [file, setFile] = useState(null);
@@ -39,7 +32,6 @@ const InvoiceForm = ({ onGastoRegistrado }) => {
     fetchCatalogs();
   }, []);
 
-  // Update presupuesto_id when campana or categoria changes
   useEffect(() => {
     if (formData.campana_evento_id && formData.categoria_id) {
       const p = presupuestos.find(
@@ -54,14 +46,16 @@ const InvoiceForm = ({ onGastoRegistrado }) => {
 
   const fetchCatalogs = async () => {
     try {
-      const [campRes, catRes, presRes] = await Promise.all([
+      const [campRes, catRes, presRes, progRes] = await Promise.all([
         api.get('/catalog/campanas'),
         api.get('/catalog/categorias'),
-        api.get('/catalog/presupuestos')
+        api.get('/catalog/presupuestos'),
+        api.get('/catalog/programas')
       ]);
       setCampanas(campRes.data);
       setCategorias(catRes.data);
       setPresupuestos(presRes.data);
+      setPrograms(progRes.data);
     } catch (error) {
       console.error("Error fetching catalogs", error);
     }
@@ -99,7 +93,7 @@ const InvoiceForm = ({ onGastoRegistrado }) => {
       
       const data = res.data;
       if (data.error) {
-        setErrorMsg("Error OCR: " + data.error);
+        setErrorMsg("Información: El servidor respondió pero hubo un detalle en el análisis. Puedes completar los campos manualmente.");
       } else {
         setFormData(prev => ({
           ...prev,
@@ -112,7 +106,7 @@ const InvoiceForm = ({ onGastoRegistrado }) => {
       }
     } catch (error) {
       console.error("OCR Error", error);
-      setErrorMsg("Error conectando al servicio OCR.");
+      setErrorMsg("Error conectando al servicio de análisis de facturas.");
     } finally {
       setOcrLoading(false);
     }
@@ -121,7 +115,7 @@ const InvoiceForm = ({ onGastoRegistrado }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.presupuesto_id) {
-      setErrorMsg("No existe un presupuesto asignado para esta combinación de Campaña y Categoría.");
+      setErrorMsg("No hay presupuesto asignado para esta combinación. Ve a 'Presupuestos' para crearlo.");
       return;
     }
 
@@ -132,6 +126,7 @@ const InvoiceForm = ({ onGastoRegistrado }) => {
       await api.post('/invoices/', {
         presupuesto_id: parseInt(formData.presupuesto_id),
         campana_evento_id: parseInt(formData.campana_evento_id),
+        programa_id: formData.programa_id ? parseInt(formData.programa_id) : null,
         proveedor: formData.proveedor,
         monto: parseFloat(formData.monto),
         fecha_factura: formData.fecha_factura || null,
@@ -143,7 +138,6 @@ const InvoiceForm = ({ onGastoRegistrado }) => {
       setTimeout(() => {
         setShowToast(false);
         if (onGastoRegistrado) onGastoRegistrado();
-        // Reset form
         setFormData({
             campana_evento_id: '', categoria_id: '', presupuesto_id: '',
             proveedor: '', concepto: '', fecha_factura: '', monto: '', numero_factura: '', programa_id: ''
@@ -153,7 +147,7 @@ const InvoiceForm = ({ onGastoRegistrado }) => {
       
     } catch (error) {
       console.error(error);
-      setErrorMsg(error.response?.data?.detail || "Error al guardar la factura.");
+      setErrorMsg(error.response?.data?.detail || "Error al guardar el gasto.");
     } finally {
       setSaving(false);
     }
@@ -162,12 +156,11 @@ const InvoiceForm = ({ onGastoRegistrado }) => {
   return (
     <div className="max-w-4xl mx-auto space-y-8 relative pb-24">
       
-      {/* Toast Notification */}
       {showToast && (
         <div className="fixed top-6 right-6 z-50 animate-bounce">
           <div className="bg-brand text-white px-6 py-4 rounded-xl shadow-lg flex items-center gap-3 font-medium">
             <CheckCircle2 className="w-6 h-6" />
-            ¡Toca la campana y envía un mensaje de esperanza a un niño que continúa su lucha!
+            ¡Gasto registrado con éxito!
           </div>
         </div>
       )}
@@ -185,11 +178,10 @@ const InvoiceForm = ({ onGastoRegistrado }) => {
 
       <form onSubmit={handleSubmit} className="space-y-8">
         
-        {/* Step 1: Upload */}
         <section className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
           <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
             <span className="bg-brand text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-sm">1</span>
-            Cargar Archivo (IA / OCR)
+            Cargar Factura / Cuenta de Cobro
           </h3>
           
           <div 
@@ -207,26 +199,25 @@ const InvoiceForm = ({ onGastoRegistrado }) => {
             {ocrLoading ? (
                <div className="flex flex-col items-center justify-center text-brand">
                  <Loader2 className="w-10 h-10 animate-spin mb-3" />
-                 <p className="font-medium text-lg">Analizando documento con IA...</p>
-                 <p className="text-sm text-gray-500 mt-1">Extrayendo proveedor, monto y detalles</p>
+                 <p className="font-medium text-lg">Analizando con Inteligencia Artificial...</p>
+                 <p className="text-sm text-gray-500 mt-1">Extrayendo datos clave del documento</p>
                </div>
             ) : file ? (
                <div className="flex flex-col items-center justify-center text-green-600">
                  <FileText className="w-10 h-10 mb-3" />
-                 <p className="font-medium text-lg border-b border-green-200 pb-1">{file.name}</p>
-                 <p className="text-sm text-gray-500 mt-2">Haz clic para cambiar el archivo</p>
+                 <p className="font-medium text-lg">{file.name}</p>
+                 <p className="text-sm text-gray-400 mt-2">Clic para cambiar</p>
                </div>
             ) : (
                <div className="flex flex-col items-center justify-center text-gray-500 group-hover:text-brand transition-colors">
                  <UploadCloud className="w-10 h-10 mb-3" />
-                 <p className="font-medium text-lg">Arrastra o haz clic para subir</p>
-                 <p className="text-sm opacity-70 mt-1">PDF, JPG, JPEG, PNG, TIFF</p>
+                 <p className="font-medium text-lg">Subir Factura o Imagen</p>
+                 <p className="text-sm opacity-70 mt-1">PDF, JPG, PNG</p>
                </div>
             )}
           </div>
         </section>
 
-        {/* Step 2: Imputación */}
         <section className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
           <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
             <span className="bg-brand text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-sm">2</span>
@@ -243,7 +234,7 @@ const InvoiceForm = ({ onGastoRegistrado }) => {
             </div>
             
             <div>
-              <label className="label-base">Categoría Presupuestal *</label>
+              <label className="label-base">Categoría de Gasto *</label>
               <select name="categoria_id" value={formData.categoria_id} onChange={handleInputChange} className="input-base" required>
                 <option value="">Seleccionar categoría</option>
                 {categorias.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
@@ -253,39 +244,34 @@ const InvoiceForm = ({ onGastoRegistrado }) => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
-                <label className="label-base text-gray-400">Presupuesto Asociado *</label>
+                <label className="label-base text-gray-400">Presupuesto Vinculado</label>
                 <input 
                   type="text" 
                   readOnly 
-                  name="presupuesto_id"
-                  className="input-base bg-gray-50 text-gray-500 border-gray-200 font-medium cursor-not-allowed"
-                  value={formData.presupuesto_id ? `Presupuesto Validado (ID: ${formData.presupuesto_id})` : 'Seleccionar campaña y categoría'} 
+                  className="input-base bg-gray-50 text-gray-400 border-gray-200 font-medium cursor-not-allowed"
+                  value={formData.presupuesto_id ? `✅ Presupuesto encontrado (ID: ${formData.presupuesto_id})` : '⚠️ No hay presupuesto para este cruce'} 
                 />
-                {!formData.presupuesto_id && formData.campana_evento_id && formData.categoria_id && (
-                  <p className="text-xs text-red-500 mt-1">Esta combinación no cruza con ningún presupuesto creado.</p>
-                )}
               </div>
               
               <div>
-                <label className="label-base">Programa Beneficiado</label>
+                <label className="label-base flex items-center gap-1"><Heart className="w-3 h-3 text-brand"/> Programa Social</label>
                 <select name="programa_id" value={formData.programa_id} onChange={handleInputChange} className="input-base">
-                  <option value="">Seleccionar un programa social (opcional)</option>
-                  {programs.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  <option value="">Seleccionar un programa (opcional)</option>
+                  {programs.map(p => <option key={p.id} value={p.id}>{p.nombre}</option>)}
                 </select>
               </div>
           </div>
         </section>
 
-        {/* Step 3: Detalle */}
         <section className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
           <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
             <span className="bg-brand text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-sm">3</span>
-            Detalle de la Factura
+            Datos Extraídos / Detalle
           </h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
-              <label className="label-base flex items-center gap-1"><FileText className="w-3 h-3"/> Tipo de Documento *</label>
+              <label className="label-base">Tipo de Documento *</label>
               <select name="tipo_documento" value={formData.tipo_documento} onChange={handleInputChange} className="input-base" required>
                 <option value="Factura">Factura</option>
                 <option value="Cuenta de Cobro">Cuenta de Cobro</option>
@@ -293,40 +279,40 @@ const InvoiceForm = ({ onGastoRegistrado }) => {
             </div>
             <div>
               <label className="label-base flex items-center gap-1"><User className="w-3 h-3"/> Proveedor *</label>
-              <input type="text" name="proveedor" placeholder="Nombre del proveedor" value={formData.proveedor} onChange={handleInputChange} className="input-base" required />
+              <input type="text" name="proveedor" placeholder="Nombre de quien emite" value={formData.proveedor} onChange={handleInputChange} className="input-base" required />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
-              <label className="label-base flex items-center gap-1"><Hash className="w-3 h-3"/> N° Documento</label>
-              <input type="text" name="numero_factura" placeholder="Ej: FAC-001 o CC-001" value={formData.numero_factura} onChange={handleInputChange} className="input-base" />
+              <label className="label-base flex items-center gap-1"><Hash className="w-3 h-3"/> Número del Documento</label>
+              <input type="text" name="numero_factura" placeholder="Ej: No. 1234" value={formData.numero_factura} onChange={handleInputChange} className="input-base" />
             </div>
             <div>
-              <label className="label-base flex items-center gap-1"><DollarSign className="w-3 h-3"/> Monto (COP) *</label>
-              <input type="number" step="0.01" min="0" name="monto" placeholder="0" value={formData.monto} onChange={handleInputChange} className="input-base font-medium text-lg text-gray-900" required />
+              <label className="label-base flex items-center gap-1"><DollarSign className="w-3 h-3 text-green-600"/> Monto Total *</label>
+              <input type="number" step="0.01" min="0" name="monto" placeholder="0.00" value={formData.monto} onChange={handleInputChange} className="input-base font-bold text-xl text-gray-900" required />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
-              <label className="label-base flex items-center gap-1"><Calendar className="w-3 h-3"/> Fecha Documento</label>
+              <label className="label-base flex items-center gap-1"><Calendar className="w-3 h-3"/> Fecha</label>
               <input type="date" name="fecha_factura" value={formData.fecha_factura} onChange={handleInputChange} className="input-base" />
             </div>
             <div>
-              <label className="label-base flex items-center gap-1"><Type className="w-3 h-3"/> Concepto / Descripción</label>
-              <input type="text" name="concepto" placeholder="Descripción del gasto" value={formData.concepto} onChange={handleInputChange} className="input-base" />
+              <label className="label-base flex items-center gap-1"><Type className="w-3 h-3"/> Descripción / Concepto</label>
+              <input type="text" name="concepto" placeholder="¿En qué se gastó?" value={formData.concepto} onChange={handleInputChange} className="input-base" />
             </div>
           </div>
         </section>
 
-        <div className="fixed bottom-0 left-64 right-0 bg-white border-t border-gray-200 p-4 px-8 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-40">
+        <div className="fixed bottom-0 left-64 right-0 bg-white border-t border-gray-200 p-4 px-8 shadow-2xl z-40">
            <div className="max-w-4xl mx-auto flex justify-end">
-             <button type="submit" className="btn-primary px-8 py-3 text-lg w-full md:w-auto shadow-md" disabled={saving}>
+             <button type="submit" className="btn-primary px-12 py-4 text-xl w-full md:w-auto shadow-xl" disabled={saving}>
                 {saving ? (
-                  <><Loader2 className="w-5 h-5 animate-spin" /> Registrando...</>
+                  <><Loader2 className="w-6 h-6 animate-spin" /> Guardando...</>
                 ) : (
-                  <><CheckCircle2 className="w-5 h-5" /> Registrar Gasto</>
+                  <><CheckCircle2 className="w-6 h-6" /> Registrar este Gasto</>
                 )}
              </button>
            </div>
