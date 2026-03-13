@@ -17,24 +17,18 @@ const Login = ({ onLoginSuccess }) => {
     setSuccess('');
 
     try {
-      if (isRegistering) {
-        await api.post(`/auth/register?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
-        setSuccess('¡Usuario creado! Ya puedes iniciar sesión.');
-        setIsRegistering(false);
-      } else {
-        const formData = new URLSearchParams();
-        formData.append('username', email);
-        formData.append('password', password);
+      const formData = new URLSearchParams();
+      formData.append('username', email);
+      formData.append('password', password);
 
-        const res = await api.post('/auth/login', formData, {
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-        });
-        
-        localStorage.setItem('erp_token', res.data.access_token);
-        onLoginSuccess();
-      }
+      const res = await api.post('/auth/login', formData, {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+      });
+      
+      localStorage.setItem('erp_token', res.data.access_token);
+      onLoginSuccess();
     } catch (err) {
-      setError(err.response?.data?.detail || 'Error en el proceso');
+      setError(err.response?.data?.detail || 'Error: No se pudo conectar con el servidor o credenciales inválidas');
     } finally {
       setLoading(false);
     }
@@ -50,7 +44,6 @@ const Login = ({ onLoginSuccess }) => {
         
         <form onSubmit={handleLogin} className="login-form">
           {error && <div className="login-error">{error}</div>}
-          {success && <div className="login-success">{success}</div>}
           
           <div className="form-group">
             <label>Correo Electrónico</label>
@@ -59,7 +52,7 @@ const Login = ({ onLoginSuccess }) => {
               value={email} 
               onChange={e => setEmail(e.target.value)} 
               required 
-              placeholder="admin@fundacion.org"
+              placeholder="usuario@fundacion.org"
             />
           </div>
           
@@ -75,22 +68,12 @@ const Login = ({ onLoginSuccess }) => {
           </div>
           
           <button type="submit" className="btn-login" disabled={loading}>
-            {loading ? 'Procesando...' : (isRegistering ? 'Crear Cuenta' : 'Iniciar Sesión')}
+            {loading ? 'Validando...' : 'Iniciar Sesión'}
           </button>
 
-          <div className="login-toggle">
-            <button 
-              type="button" 
-              className="btn-link"
-              onClick={() => {
-                setIsRegistering(!isRegistering);
-                setError('');
-                setSuccess('');
-              }}
-            >
-              {isRegistering ? '¿Ya tienes cuenta? Inicia Sesión' : '¿No tienes cuenta? Regístrate'}
-            </button>
-          </div>
+          <footer className="mt-6 text-center text-xs text-gray-400">
+            Acceso restringido para control de gastos internos.
+          </footer>
         </form>
       </div>
     </div>
