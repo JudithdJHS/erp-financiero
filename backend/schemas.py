@@ -2,6 +2,16 @@ from pydantic import BaseModel, Field
 from datetime import date, datetime
 from typing import Optional, Any, List
 
+class ProgramaBase(BaseModel):
+    nombre: str
+    descripcion: Optional[str] = None
+    activo: bool = True
+
+class ProgramaOutput(ProgramaBase):
+    id: int
+    class Config:
+        from_attributes = True
+
 class CategoriaBase(BaseModel):
     nombre: str
     descripcion: Optional[str] = None
@@ -36,6 +46,7 @@ class PresupuestoOutput(PresupuestoBase):
 class FacturaCreate(BaseModel):
     presupuesto_id: int
     campana_evento_id: int
+    programa_id: Optional[int] = None
     proveedor: Optional[str] = None
     monto: float = Field(ge=0)
     fecha_factura: Optional[date] = None
