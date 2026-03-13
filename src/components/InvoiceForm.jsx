@@ -101,7 +101,8 @@ const InvoiceForm = ({ onGastoRegistrado }) => {
           monto: data.monto ? data.monto.toString() : prev.monto,
           fecha_factura: data.fecha_factura || prev.fecha_factura,
           concepto: data.concepto || prev.concepto,
-          numero_factura: data.numero_factura || prev.numero_factura
+          numero_factura: data.numero_factura || prev.numero_factura,
+          ocr_payload: data.ocr_payload || null
         }));
       }
     } catch (error) {
@@ -131,7 +132,8 @@ const InvoiceForm = ({ onGastoRegistrado }) => {
         monto: parseFloat(formData.monto),
         fecha_factura: formData.fecha_factura || null,
         concepto: formData.concepto,
-        numero_factura: formData.numero_factura
+        numero_factura: formData.numero_factura,
+        ocr_payload: formData.ocr_payload || null
       });
 
       setShowToast(true);
@@ -140,7 +142,8 @@ const InvoiceForm = ({ onGastoRegistrado }) => {
         if (onGastoRegistrado) onGastoRegistrado();
         setFormData({
             campana_evento_id: '', categoria_id: '', presupuesto_id: '',
-            proveedor: '', concepto: '', fecha_factura: '', monto: '', numero_factura: '', programa_id: ''
+            proveedor: '', concepto: '', fecha_factura: '', monto: '', numero_factura: '', programa_id: '',
+            ocr_payload: null
         });
         setFile(null);
       }, 3000);
