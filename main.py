@@ -2,16 +2,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import os
 
+# Imports directos para despliegue plano en la raíz de GitHub
 from db import engine, Base
-import models
 import auth, catalog, dashboard, invoices
 from alert_engine import start_scheduler
 
-# Create tables
-try:
-    Base.metadata.create_all(bind=engine)
-except Exception as e:
-    print(f"DB table creation warning: {e}")
+# Crear tablas
+Base.metadata.create_all(bind=engine) 
 
 app = FastAPI(title="ERP Financiero API")
 
@@ -27,10 +24,7 @@ os.makedirs('uploads', exist_ok=True)
 
 @app.on_event("startup")
 def startup_event():
-    try:
-        start_scheduler()
-    except Exception as e:
-        print(f"Scheduler warning: {e}")
+    start_scheduler()
 
 @app.get("/health")
 def health_check():
