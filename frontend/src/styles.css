@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-surface text-gray-800 font-sans antialiased;
+  }
+}
+
+@layer components {
+  /* Cards Básicas */
+  .card-premium {
+    @apply bg-white rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.04)] border border-gray-100 p-6;
+  }
+  
+  /* Botones Básicos */
+  .btn-primary {
+    @apply bg-brand hover:bg-brand-dark text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2;
+  }
+
+  .btn-secondary {
+    @apply bg-white hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 border border-gray-200 rounded-lg transition-colors flex items-center justify-center gap-2;
+  }
+  
+  /* Inputs */
+  .input-base {
+    @apply w-full border border-gray-200 rounded-lg px-4 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all;
+  }
+  
+  .label-base {
+    @apply block text-sm font-medium text-gray-600 mb-1.5;
+  }
+  
+  /* Sidebar Item */
+  .sidebar-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-lg text-gray-500 font-medium transition-colors cursor-pointer mb-1;
+  }
+  
+  .sidebar-item:hover {
+    @apply text-sidebar-textHover bg-gray-50;
+  }
+  
+  .sidebar-item.active {
+    @apply bg-sidebar-activeBg text-sidebar-activeText font-semibold;
+  }
+  
+  /* Badges */
+  .badge-success {
+    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800;
+  }
+  
+  .badge-warning {
+    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800;
+  }
+  
+  .badge-danger {
+    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800;
+  }
+}
+
+/* Scrollbar customization para que se vea limpio como en Mac */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent; 
+}
+::-webkit-scrollbar-thumb {
+  background: #d1d5db; 
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af; 
+}
